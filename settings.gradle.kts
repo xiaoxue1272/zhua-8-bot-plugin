@@ -1,0 +1,1 @@
+rootProject.name = "zhua-8-bot-plugin"
