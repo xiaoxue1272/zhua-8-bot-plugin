@@ -15,6 +15,13 @@ interface EventLogic {
     fun destroyLogic()
 
     companion object {
-        val eventLogicList : List<EventLogic> = listOf(GroupMessageEventLogic(), BotInvitedJoinGroupRequestEventLogic())
+        val eventLogicList : List<EventLogic> = listOf(
+            GroupMessageEventLogic(),
+            BotInvitedJoinGroupRequestEventLogic(),
+            FriendMessageEventLogic(),
+            StrangerMessageEventLogic(),
+            NewFriendRequestEventLogic(),
+            GroupTempMessageEventLogic(),
+        )
     }
 }
