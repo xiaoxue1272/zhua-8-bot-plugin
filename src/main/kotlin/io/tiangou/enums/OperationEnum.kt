@@ -6,8 +6,8 @@ import io.tiangou.service.*
 
 
 enum class OperationEnum (
-    private val operationDesc : String,
-    private val prefix: String
+    val desc : String,
+    val prefix: String
 ) {
 
     COMMAND("指令", "/cmd"),
@@ -19,21 +19,23 @@ enum class OperationEnum (
     DOWNLOAD("文件下载", "/download"),
     ;
 
-    fun getConformTypeEnum(prefix : String?) : OperationService {
-        return when (prefix) {
-            COMMAND.prefix -> CommandService()
-            TALK.prefix -> TalkService()
-            UPLOAD.prefix -> UploadService()
-            DOWNLOAD.prefix -> DownloadService()
-            else -> {
-                // 可能会为null值,所以需要后面显示声明 == true
-                if (prefix?.isBlank() == true){
-                    // 为空默认走聊天指令
-                    TalkService()
-                }
-                throw Zhua8BotException(ErrorCodeEnum.UNKNOW_OPERATION_TYPE)
+    companion object {
+        val operationRegex: Regex =  Regex("/\\w+");
+        fun getConformTypeEnum(message : String) : OperationEnum {
+            val findResult = operationRegex.find(message)?.value;
+            if (message.isBlank() || findResult == null || !message.startsWith(findResult)) {
+                return TALK
+            } else if (message.startsWith(COMMAND.prefix)) {
+                return COMMAND
+            } else if (message.startsWith(TALK.prefix)) {
+                return TALK
+            } else if (message.startsWith(UPLOAD.prefix)) {
+                return UPLOAD
+            } else if (message.startsWith(DOWNLOAD.prefix)) {
+                return DOWNLOAD
+            } else {
+                throw Zhua8BotException(ErrorCodeEnum.UNKNOWN_OPERATION_TYPE)
             }
         }
     }
-
 }

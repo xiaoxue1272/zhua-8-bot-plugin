@@ -1,5 +1,7 @@
 package io.tiangou.logic
 
+import net.mamoe.mirai.event.Event
+
 
 /**
  * 定义监听事件的事件,及其执行逻辑
@@ -16,12 +18,12 @@ interface EventLogic {
 
     companion object {
         val eventLogicList : List<EventLogic> = listOf(
-            GroupMessageEventLogic(),
-            BotInvitedJoinGroupRequestEventLogic(),
-            FriendMessageEventLogic(),
-            StrangerMessageEventLogic(),
-            NewFriendRequestEventLogic(),
-            GroupTempMessageEventLogic(),
+            GroupMessageEventLogic,
+            BotInvitedJoinGroupRequestEventLogic,
+            FriendMessageEventLogic,
+            StrangerMessageEventLogic,
+            NewFriendRequestEventLogic,
+            GroupTempMessageEventLogic,
         )
     }
 }

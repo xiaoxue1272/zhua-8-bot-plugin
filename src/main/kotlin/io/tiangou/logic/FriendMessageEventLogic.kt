@@ -7,18 +7,14 @@ import net.mamoe.mirai.message.data.MessageChainBuilder
 import net.mamoe.mirai.message.data.content
 import kotlin.reflect.KClass
 
-class FriendMessageEventLogic : AbstractEventLogic<FriendMessageEvent>("好友消息") {
+object FriendMessageEventLogic : AbstractEventLogic<FriendMessageEvent>("好友消息") {
 
     override suspend fun logic(event: FriendMessageEvent) : Message {
         logger.info("接收到好友:[${event.friend.nick}]发送的消息:[${event.message.content}]")
-        return MessageChainBuilder().build().plus("干啥");
+        return MessageChainBuilder().append("干啥").build();
     }
 
-    override fun getEventClass(): KClass<FriendMessageEvent> {
-        return FriendMessageEvent::class
-    }
+    override fun getEventClass(): KClass<FriendMessageEvent> = FriendMessageEvent::class
 
-    override fun getContact(event: FriendMessageEvent): Contact {
-        return event.friend
-    }
+    override fun getContact(event: FriendMessageEvent): Contact = event.friend
 }
