@@ -1,5 +1,4 @@
 package io.tiangou.constants
 
-data class Constants(
-  val arg : String = "1"
-)
+const val EMPTY_STRING: String = ""
+val OPERATION_REGEX = Regex("/\\w+")

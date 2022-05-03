@@ -1,5 +1,6 @@
 package io.tiangou.service.factory
 
+import io.tiangou.data.Zhua8MessageInfo
 import io.tiangou.enums.ErrorCodeEnum
 import io.tiangou.enums.OperationEnum
 import io.tiangou.expection.Zhua8BotException
@@ -9,7 +10,7 @@ import net.mamoe.mirai.event.events.MessageEvent
 interface OperationServiceFactory{
 
 
-    fun <E: MessageEvent> createOperationService(event: E, operationEnum: OperationEnum) : OperationService
+    fun createOperationService(messageInfo: Zhua8MessageInfo, operation: OperationEnum) : OperationService
 
 
     companion object {

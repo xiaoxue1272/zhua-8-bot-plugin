@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.tiangou"
-version = "0.0.1"
+version = "0.0.2-dev"
 
 dependencies {
     implementation("ch.qos.logback:logback-parent:1.2.11")

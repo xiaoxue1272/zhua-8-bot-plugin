@@ -1,8 +1,8 @@
 package io.tiangou.service
 
-import net.mamoe.mirai.event.events.MessageEvent
+import io.tiangou.data.Zhua8MessageInfo
 
-class DownloadService(event: MessageEvent): AbstractOperationService(event) {
+class DownloadService(messageInfo: Zhua8MessageInfo): AbstractOperationService(messageInfo) {
     override fun init(): DownloadService {
         // todo 后面开发
         return this

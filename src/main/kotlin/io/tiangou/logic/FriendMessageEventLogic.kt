@@ -11,7 +11,7 @@ object FriendMessageEventLogic : AbstractEventLogic<FriendMessageEvent>("好友�
 
     override suspend fun logic(event: FriendMessageEvent) : Message {
         logger.info("接收到好友:[${event.friend.nick}]发送的消息:[${event.message.content}]")
-        return MessageChainBuilder().append("干啥").build();
+        return MessageChainBuilder().append(GroupTempMessageEventLogic.executeService(event)).build();
     }
 
     override fun getEventClass(): KClass<FriendMessageEvent> = FriendMessageEvent::class

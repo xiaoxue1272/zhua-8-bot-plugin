@@ -1,10 +1,12 @@
 package io.tiangou.logic
 
+import io.tiangou.data.Zhua8MessageInfo
 import io.tiangou.enums.OperationEnum
 import io.tiangou.expection.Zhua8BotException
 import io.tiangou.service.factory.FactoryEnum
 import io.tiangou.service.factory.OperationServiceFactory
 import net.mamoe.mirai.contact.Contact
+import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.Event
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.GlobalEventChannel
@@ -41,10 +43,8 @@ abstract class AbstractEventLogic<E: Event>(
                 }
             isLogicLoad = true
             logger.info{"zhua8机器人${onListenActionDescription}监听行为配置完成"}
-            return
         } catch (e: Exception) {
             logger.error("zhua8机器人${onListenActionDescription}监听行为配置异常", e)
-            return
         }
     }
 
@@ -53,14 +53,18 @@ abstract class AbstractEventLogic<E: Event>(
         try {
             replyMessage = logic(event)
         } catch (e : Zhua8BotException) {
-            logger.warning("zhua8机器人,[${event::class.simpleName}]事件逻辑执行异常", e)
-            replyMessage = MessageChainBuilder().build().plus("错误:[${e.errorCode}],错误信息:[${e.errorMessage}]")
+            logger.warning("zhua8机器人,[${event::class.simpleName}]事件逻辑执行异常,错误码:[${e.errorCode}],错误信息:[${e.errorMessage}]")
+            replyMessage = MessageChainBuilder()
+                .append("错误:[${e.errorCode}],错误信息:[${e.errorMessage}]")
+                .build()
         }
         // 若回复对象不为空 且 回复消息不为空,则回执消息
-        val contact = getContact(event);
-        if (replyMessage != null && contact != null) {
-            logger.info("回复事件类型:[${event::class.simpleName}],回复对象:[${contact.id}],回复信息:[${replyMessage.content}]")
-            contact.sendMessage(replyMessage)
+        getContact(event)?.apply {
+            val contact = this
+            replyMessage?.run {
+                logger.info("回复事件类型:[${event::class.simpleName}],回复对象:[${contact.id}],回复信息:[${this.content}]")
+                contact.sendMessage(addMessageHeader(this, event))
+            }
         }
     }
 
@@ -92,14 +96,42 @@ abstract class AbstractEventLogic<E: Event>(
      */
     abstract fun getEventClass () : KClass<E>
 
+    open fun addMessageHeader(message: Message, event: E) : Message  = message
+
+    fun stringToMessage(stringMessage: String) : Message =
+        MessageChainBuilder().append(stringMessage).build()
+
+    fun judgeMessageOperation(messageInfo: Zhua8MessageInfo): OperationEnum {
+        return OperationEnum.getConformTypeEnum(messageInfo.prefix)
+    }
+
+    fun convertMessage(message: String, user: User) : Zhua8MessageInfo {
+        val maybePrefix: String? = OperationEnum
+            .operationRegex
+            .find(message)
+            ?.value
+        var prefix: String? = null
+        if (maybePrefix != null && message.startsWith(maybePrefix)) {
+            prefix = maybePrefix
+        }
+        val body : String
+        if (prefix != null) {
+            body = message.removePrefix(prefix).trimStart()
+        } else {
+            body = message;
+        }
+        return Zhua8MessageInfo(prefix, body, user);
+    }
+
     open fun <E : MessageEvent> executeService(event: E) : String {
-        val enum = OperationEnum.getConformTypeEnum(event.message.content)
-        logger.info("解析当前消息操作类型为:[${enum.desc}],开始执行对应下游服务逻辑")
-        return doService(event, enum)
+        val messageInfo = convertMessage(event.message.content, event.sender);
+        val operation = judgeMessageOperation(messageInfo)
+        logger.info("解析当前消息操作类型为:[${operation.desc}],开始执行对应下游服务逻辑")
+        return doService(messageInfo, operation)
     }
 
 
-    open fun<E: MessageEvent> doService(event: E, enum: OperationEnum) : String =
-        serviceFactory.createOperationService(event, enum).doOperator()
+    open fun doService(messageInfo: Zhua8MessageInfo, operation: OperationEnum) : String =
+        serviceFactory.createOperationService(messageInfo, operation).doOperator()
 
 }

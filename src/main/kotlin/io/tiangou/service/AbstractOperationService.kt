@@ -1,5 +1,6 @@
 package io.tiangou.service
 
+import io.tiangou.data.Zhua8MessageInfo
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.MiraiLogger
@@ -10,14 +11,14 @@ import net.mamoe.mirai.utils.MiraiLogger
  * 扩展性待考虑,后期是否优化待考虑
  */
 abstract class AbstractOperationService (
-    protected val event: MessageEvent
+    protected val messageInfo: Zhua8MessageInfo
 ): OperationService {
 
     protected val logger: MiraiLogger = MiraiLogger.Factory.create(this::class)
 
 
     override fun doOperator(): String {
-        return checkUserPermission(event.sender)
+        return checkUserPermission(messageInfo)
             .init()
             .execute()
     }
@@ -40,8 +41,8 @@ abstract class AbstractOperationService (
      * @param 当前消息发送用户
      * @throws
      */
-    open fun checkUserPermission(user: User) : AbstractOperationService {
-        logger.info("当前事件不进行权限校验,消息来源用户:[${user.nick}]")
+    open fun checkUserPermission(messageInfo: Zhua8MessageInfo) : AbstractOperationService {
+        logger.info("当前事件不进行权限校验,消息来源用户:[${messageInfo.sender.nick}]")
         return this;
     }
 

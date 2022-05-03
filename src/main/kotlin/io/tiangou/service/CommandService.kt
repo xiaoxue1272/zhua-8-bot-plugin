@@ -1,10 +1,11 @@
 package io.tiangou.service
 
+import io.tiangou.data.Zhua8MessageInfo
 import io.tiangou.expection.NoPermissionException
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.events.MessageEvent
 
-class CommandService(event: MessageEvent): AbstractOperationService(event) {
+class CommandService(event: Zhua8MessageInfo): AbstractOperationService(event) {
     override fun init(): CommandService {
         TODO("Not yet implemented")
     }
@@ -13,7 +14,7 @@ class CommandService(event: MessageEvent): AbstractOperationService(event) {
         TODO("Not yet implemented")
     }
 
-    override fun checkUserPermission(user: User): CommandService {
+    override fun checkUserPermission(messageInfo: Zhua8MessageInfo): CommandService {
         logger.info("功能没开发好,一律拦截")
         throw NoPermissionException()
     }
