@@ -1,6 +1,6 @@
 package io.tiangou.logic
 
-import io.tiangou.constants.EMPTY_STRING
+import io.tiangou.constants.Constants
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.MessageEvent
@@ -26,7 +26,7 @@ object GroupMessageEventLogic : AbstractEventLogic<GroupMessageEvent>("群内at"
 
     override fun <E : MessageEvent> executeService(event: E): String {
         // 因群内消息只监听at,所以要特殊处理一下,把at的那部分去掉
-        val mainMessage = event.message.content.replace("@${event.bot.id}", EMPTY_STRING).trimStart();
+        val mainMessage = event.message.content.replace("@${event.bot.id}", Constants.EMPTY_STRING).trimStart();
         val messageInfo = convertMessage(mainMessage, event.sender);
         val operation = judgeMessageOperation(messageInfo);
         logger.info("当前监听到的群内at消息解析后的操作类型最终判断为:[${operation.desc}],开始执行对应下游服务逻辑")

@@ -5,7 +5,7 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
 
-const val VERSION = "0.0.1";
+const val VERSION = "0.0.2";
 
 object Zhua8BotLogic : KotlinPlugin(
     JvmPluginDescription(
@@ -15,17 +15,18 @@ object Zhua8BotLogic : KotlinPlugin(
     )
     {
         author("Tian gou")
+        info("zhua8机器人主逻辑")
     }
 )
 {
-    override fun onEnable() {
+    override fun onEnable()  = with(EventLogic.eventLogicList){
         logger.info { "zhua8机器人,版本号:$VERSION" }
-        for (eventLogic in EventLogic.eventLogicList) {
-            eventLogic.loadLogic()
+        this.forEach {
+            it.loadLogic()
         }
     }
 
-    override fun onDisable() {
+    override fun onDisable() = with(EventLogic.eventLogicList){
         logger.info { "zhua8机器人,版本号:$VERSION" }
         for (eventLogic in EventLogic.eventLogicList) {
             eventLogic.loadLogic()

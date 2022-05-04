@@ -1,6 +1,8 @@
 package io.tiangou.logic
 
+import io.tiangou.constants.Constants
 import io.tiangou.data.Zhua8MessageInfo
+import io.tiangou.data.Zhua8MessageInfoBuilder
 import io.tiangou.enums.OperationEnum
 import io.tiangou.expection.Zhua8BotException
 import io.tiangou.service.factory.FactoryEnum
@@ -105,30 +107,32 @@ abstract class AbstractEventLogic<E: Event>(
         return OperationEnum.getConformTypeEnum(messageInfo.prefix)
     }
 
-    fun convertMessage(message: String, user: User) : Zhua8MessageInfo {
-        val maybePrefix: String? = OperationEnum
-            .operationRegex
-            .find(message)
-            ?.value
-        var prefix: String? = null
-        if (maybePrefix != null && message.startsWith(maybePrefix)) {
-            prefix = maybePrefix
-        }
-        val body : String
-        if (prefix != null) {
-            body = message.removePrefix(prefix).trimStart()
-        } else {
-            body = message;
-        }
-        return Zhua8MessageInfo(prefix, body, user);
+    fun convertMessage(message: String, sender: User) : Zhua8MessageInfo {
+        var body : String? = null
+        return Zhua8MessageInfoBuilder()
+            .prefix(
+                Constants.OPERATION_REGEX
+                    .find(message)
+                    ?.value?.let {
+                        if (message.startsWith(it)) {
+                            body = message.removePrefix(it).trimStart()
+                            it
+                        } else {
+                            null
+                        }
+                    }
+            )
+            .body(body)
+            .sender(sender)
+            .build();
     }
 
-    open fun <E : MessageEvent> executeService(event: E) : String {
-        val messageInfo = convertMessage(event.message.content, event.sender);
-        val operation = judgeMessageOperation(messageInfo)
-        logger.info("解析当前消息操作类型为:[${operation.desc}],开始执行对应下游服务逻辑")
-        return doService(messageInfo, operation)
-    }
+    open fun <E : MessageEvent> executeService(event: E) : String =
+        convertMessage(event.message.content, event.sender).let {
+            val operation = judgeMessageOperation(it)
+            logger.info("解析当前消息操作类型为:[${operation.desc}],开始执行对应下游服务逻辑")
+            doService(it, operation)
+        }
 
 
     open fun doService(messageInfo: Zhua8MessageInfo, operation: OperationEnum) : String =

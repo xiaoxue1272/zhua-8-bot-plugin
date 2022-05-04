@@ -41,9 +41,9 @@ abstract class AbstractOperationService (
      * @param 当前消息发送用户
      * @throws
      */
-    open fun checkUserPermission(messageInfo: Zhua8MessageInfo) : AbstractOperationService {
-        logger.info("当前事件不进行权限校验,消息来源用户:[${messageInfo.sender.nick}]")
-        return this;
-    }
+    open fun checkUserPermission(messageInfo: Zhua8MessageInfo) : AbstractOperationService =
+        apply {
+            logger.info("当前事件不进行权限校验,消息来源用户:[${messageInfo.sender.nick}]")
+        }
 
 }

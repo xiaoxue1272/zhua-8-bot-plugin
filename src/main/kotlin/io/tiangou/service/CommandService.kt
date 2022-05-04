@@ -2,8 +2,6 @@ package io.tiangou.service
 
 import io.tiangou.data.Zhua8MessageInfo
 import io.tiangou.expection.NoPermissionException
-import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.event.events.MessageEvent
 
 class CommandService(event: Zhua8MessageInfo): AbstractOperationService(event) {
     override fun init(): CommandService {

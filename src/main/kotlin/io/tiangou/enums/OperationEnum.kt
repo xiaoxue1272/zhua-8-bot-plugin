@@ -1,9 +1,6 @@
 package io.tiangou.enums
 
 import io.tiangou.expection.Zhua8BotException
-import io.tiangou.io.tiangou.enums.CommandEnum
-import io.tiangou.service.*
-
 
 enum class OperationEnum (
     val desc : String,
@@ -20,12 +17,10 @@ enum class OperationEnum (
     ;
 
     companion object {
-        val operationRegex: Regex =  Regex("/\\w+");
-        fun getConformTypeEnum(prefix: String?) : OperationEnum {
-            if (prefix == null || prefix.isBlank()) {
-                return TALK
-            }
-            return when (prefix) {
+        fun getConformTypeEnum(prefix: String?) : OperationEnum  = run{
+            return if (prefix == null || prefix.isBlank()) {
+                TALK
+            } else when (prefix) {
                 TALK.prefix -> TALK
                 COMMAND.prefix -> COMMAND
                 UPLOAD.prefix -> UPLOAD

@@ -15,16 +15,11 @@ interface OperationServiceFactory{
 
     companion object {
         private val factoryMap: Map<FactoryEnum, OperationServiceFactory> = mapOf(
-            Pair(FactoryEnum.DEFAULT, DefaultOperationFactory)
+            FactoryEnum.DEFAULT to DefaultOperationFactory
         )
 
-        fun getFactory(factoryEnum: FactoryEnum): OperationServiceFactory {
-            val operationServiceFactory = factoryMap.get(factoryEnum);
-            if (operationServiceFactory == null) {
-                throw Zhua8BotException(ErrorCodeEnum.UNKNOWN_OPERATION_FACTORY_TYPE)
-            }
-            return operationServiceFactory
-        }
+        fun getFactory(factoryEnum: FactoryEnum): OperationServiceFactory =
+            factoryMap.get(factoryEnum) ?: throw Zhua8BotException(ErrorCodeEnum.UNKNOWN_OPERATION_FACTORY_TYPE)
     }
 
 }
