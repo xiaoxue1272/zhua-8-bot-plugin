@@ -1,9 +1,7 @@
 package io.tiangou.engine
 
-interface Engine {
+interface Engine<T : Work<*>> {
 
-    fun initEngine()
-
-    fun execute(work: Work)
+    fun execute(work: T)
 
 }

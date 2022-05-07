@@ -1,6 +1,7 @@
 package io.tiangou.logic
 
 import io.tiangou.constants.Constants
+import io.tiangou.enums.SpecialMessageEnum
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.MessageEvent
@@ -12,7 +13,7 @@ object GroupMessageEventLogic : AbstractEventLogic<GroupMessageEvent>("群内at"
 
     override suspend fun logic(event: GroupMessageEvent) : Message? {
         return if (event.message.firstIsInstanceOrNull<At>()?.target == event.bot.id) {
-             onAt(event);
+             onAt(event)
         } else {
             null
         }
@@ -21,16 +22,23 @@ object GroupMessageEventLogic : AbstractEventLogic<GroupMessageEvent>("群内at"
     private fun onAt(event: GroupMessageEvent) : Message {
         // 如果消息中能够获取到At对象实例,且At目标为Bot
         logger.info("接受到at,消息内容:[${event.message.content}],群名称:${event.group.name},at人群名片:[${event.senderName}]")
-        return stringToMessage(executeService(event));
+        return stringToMessage(executeService(event))
     }
 
-    override fun <E : MessageEvent> executeService(event: E): String {
+    override fun <E : MessageEvent> executeService(event: E): List<String> {
         // 因群内消息只监听at,所以要特殊处理一下,把at的那部分去掉
-        val mainMessage = event.message.content.replace("@${event.bot.id}", Constants.EMPTY_STRING).trimStart();
-        val messageInfo = convertMessage(mainMessage, event.sender);
-        val operation = judgeMessageOperation(messageInfo);
+        val mainMessage = event.message.content.replace("@${event.bot.id}", Constants.EMPTY_STRING).trimStart()
+        val messageInfo = convertMessage(mainMessage, event.sender)
+        val specialMessageEnum = SpecialMessageEnum.getEnumIfMessageSpecial(messageInfo)?.apply {
+            messageInfo.body = actualReplacementMessage
+        }
+        val operation = judgeMessageOperation(messageInfo)
         logger.info("当前监听到的群内at消息解析后的操作类型最终判断为:[${operation.desc}],开始执行对应下游服务逻辑")
-        return doService(messageInfo, operation)
+        var result = doService(messageInfo, operation)
+        if (specialMessageEnum != null) {
+            result = listOf(specialMessageEnum.reply)
+        }
+        return result
     }
 
     override fun getEventClass(): KClass<GroupMessageEvent> = GroupMessageEvent::class

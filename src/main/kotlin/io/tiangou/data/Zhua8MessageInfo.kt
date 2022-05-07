@@ -7,7 +7,7 @@ class Zhua8MessageInfo(
     // 消息指令类型 可能为空 为空走聊天指令
     val prefix: String?,
     // 消息主要内容
-    val body: String,
+    var body: String,
     // 消息发送人
     val sender: User
 ) {
@@ -19,7 +19,7 @@ class Zhua8MessageInfoBuilder() {
     private var prefix: String? = null
 
     // 消息主要内容
-    private lateinit var body: String
+    private var body: String? = null
 
     // 消息发送人
     private lateinit var sender: User

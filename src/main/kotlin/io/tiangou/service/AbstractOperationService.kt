@@ -1,8 +1,6 @@
 package io.tiangou.service
 
 import io.tiangou.data.Zhua8MessageInfo
-import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.MiraiLogger
 
 /**
@@ -17,7 +15,7 @@ abstract class AbstractOperationService (
     protected val logger: MiraiLogger = MiraiLogger.Factory.create(this::class)
 
 
-    override fun doOperator(): String {
+    override fun doOperator() : List<String> {
         return checkUserPermission(messageInfo)
             .init()
             .execute()
@@ -26,19 +24,19 @@ abstract class AbstractOperationService (
     /**
      * 初始化运行环境,或者说,执行前需要的准备工作
      */
-    abstract fun init() : AbstractOperationService;
+    abstract fun init() : AbstractOperationService
 
     /**
      * 执行
      * @return 返回给用户的消息,执行结果或别的啥消息内容
      */
-    abstract fun execute() : String;
+    abstract fun execute() : List<String>
 
     /**
      * 权限校验
      * 默认为不进行校验 如talk指令(对话行为)
      * 若需要进行权限校验,则重写该方法
-     * @param 当前消息发送用户
+     * @param messageInfo zhua8机器人消息对象
      * @throws
      */
     open fun checkUserPermission(messageInfo: Zhua8MessageInfo) : AbstractOperationService =

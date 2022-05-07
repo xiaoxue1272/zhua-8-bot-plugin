@@ -8,8 +8,8 @@ class UploadService(messageInfo: Zhua8MessageInfo): AbstractOperationService(mes
         return this
     }
 
-    override fun execute(): String {
+    override fun execute(): List<String> {
         // todo 后面开发
-        return "功能懒得写,后面再说"
+        return arrayListOf("功能懒得写,后面再说")
     }
 }

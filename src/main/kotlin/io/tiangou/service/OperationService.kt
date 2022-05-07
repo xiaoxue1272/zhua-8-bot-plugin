@@ -7,6 +7,6 @@ package io.tiangou.service
  */
 interface OperationService {
 
-    fun doOperator() : String
+    fun doOperator() : List<String>
 
 }

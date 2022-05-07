@@ -8,7 +8,7 @@ class TalkService(messageInfo: Zhua8MessageInfo): AbstractOperationService(messa
         return this
     }
 
-    override fun execute(): String {
-        return messageInfo.body
+    override fun execute(): List<String> {
+        return arrayListOf(messageInfo.body)
     }
 }

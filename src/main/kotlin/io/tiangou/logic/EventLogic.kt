@@ -1,7 +1,5 @@
 package io.tiangou.logic
 
-import net.mamoe.mirai.event.Event
-
 
 /**
  * 定义监听事件的事件,及其执行逻辑
