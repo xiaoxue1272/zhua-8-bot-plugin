@@ -14,16 +14,16 @@ import java.util.concurrent.atomic.AtomicReference
 
 
 class SSHClient constructor(
-    host: String,
-    port: Int,
-    user: String,
-    password: String,
+    val host: String,
+    val port: Int,
+    val user: String,
+    val password: String,
 ) {
 
     /**
      * 会话对象
      */
-    val session: Session
+    var session: Session? = null
 
     /**
      * 当前管道对象
@@ -36,9 +36,15 @@ class SSHClient constructor(
      */
     val currentFlagReference : AtomicReference<String> = AtomicReference(READY)
 
-    init {
+    @Volatile
+    var currentTerminalRead: Boolean = false
+
+    @Volatile
+    var concurrentTerminalString : String? = null
+
+    fun connectToSession(): Session {
         try {
-            session = JSCH_INSTANCE.getSession(user, host, port)!!.apply {
+            return JSCH_INSTANCE.getSession(user, host, port)!!.apply {
                 setPassword(password)
                 setConfig("StrictHostKeyChecking", "no")
                 connect()
@@ -62,24 +68,27 @@ class SSHClient constructor(
                 it == userFlag || it == READY
             }?.apply {
                 currentFlagReference.compareAndSet(this, userFlag)
-                channel = channel.safeCast() ?: sshEnum.createChannel(session).safeCast()
-                channel?.apply {
-                    if (!session.isConnected) {
-                        session.connect()
-                    }
-                    takeIf{
-                        !it.isConnected && SSHEnum.ConnectType.FIRST == sshEnum.connetcType
-                    }?.connect()
-                    channel.safeCast<C>()?.let {
-                        result = exec(it)
-                    }
-                    takeIf{
-                        !it.isConnected && SSHEnum.ConnectType.LAST == sshEnum.connetcType
-                    }?.connect()
-                    takeIf { isDone }?.apply {
-                        disconnect()
-                        reset()
-                    }
+                if (session == null || !session!!.isConnected) {
+                    session = connectToSession()
+                }
+                if (channel == null || !channel!!.isConnected) {
+                    channel = sshEnum.createChannel(session!!)
+                }
+                if (!channel!!.isConnected && SSHEnum.ConnectType.FIRST == sshEnum.connetcType) {
+                    channel!!.connect()
+                }
+                channel!!.safeCast<C>()?.let {
+                    result = exec(it)
+                    currentTerminalRead = false
+                    concurrentTerminalString = null
+                }
+                if (!channel!!.isConnected && SSHEnum.ConnectType.LAST == sshEnum.connetcType) {
+                    channel!!.connect()
+                }
+                if (isDone) {
+                    channel!!.disconnect()
+                    session!!.disconnect()
+                    reset()
                 }
             }
         }

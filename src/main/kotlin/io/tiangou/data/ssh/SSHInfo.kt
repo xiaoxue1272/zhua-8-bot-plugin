@@ -5,5 +5,5 @@ open class SSHInfo (
 )
 data class ShellInfo(
     override val clientFlag : String?,
-    val CommandList: List<String>
+    val CommandList: List<String>?,
 ): SSHInfo(clientFlag)

@@ -7,49 +7,66 @@ import io.tiangou.engine.AbstractEngine
 import io.tiangou.engine.CommonWork
 import io.tiangou.engine.ssh.SSHClient
 import io.tiangou.enums.SSHEnum
-import io.tiangou.threadpool.CommonThreadPool
 import io.tiangou.utils.Zhua8PropertiesUtils
-import java.io.BufferedReader
 import java.io.InputStream
 
 object ShellEngine : AbstractEngine<CommonWork<ShellInfo, List<String>>>() {
 
     override fun initEngine() {
         val properties = Zhua8PropertiesUtils.loadProperties("ssh.properties")
-        SSHClient.Builder()
-            .setHost(properties.getProperty("default.ssh.host"))
-            .setUser(properties.getProperty("default.ssh.user"))
-            .setPassword(properties.getProperty("default.ssh.password"))
-            .setPort(properties.getProperty("default.ssh.port").takeIf { it.isNotBlank() }?.toInt() ?: "22".toInt())
-            .setClientFlag(properties.getProperty("default.ssh.clientFlag").takeIf { it.isNotBlank() } ?: Constants.DEFAULT_CLIENT_FLAG)
-            .build()
+        var clientFlags = properties.getProperty("ssh.clientFlag")
+        if (clientFlags == null || clientFlags.isBlank()) {
+            clientFlags = Constants.DEFAULT_CLIENT_FLAG
+        }
+        clientFlags.split(Constants.COMMA).forEach {
+            SSHClient.Builder()
+                .setHost(properties.getProperty("default.ssh.host"))
+                .setUser(properties.getProperty("default.ssh.user"))
+                .setPassword(properties.getProperty("default.ssh.password"))
+                .setPort(properties.getProperty("default.ssh.port").takeIf { it.isNotBlank() }?.toInt() ?: "22".toInt())
+                .setClientFlag(it)
+                .build()
+        }
     }
 
     override fun content(work: CommonWork<ShellInfo, List<String>>) {
         work.changeFlagWorking()
         val sshClient = SSHClient.getSSHClient(work.parameters.clientFlag ?: Constants.DEFAULT_CLIENT_FLAG)
-        sshClient.execute<ChannelShell, Unit>(work.taskNo, SSHEnum.SHELL, work.isLifeCycleFinish()) {
-                outputStream.apply {
-                    work.parameters.CommandList.forEach {
-                        this.write(it.toByteArray(Charsets.UTF_8))
-                        this.flush()
-                    }
-                }
-                if (work.isLifeCycleFinish()) {
-                    outputStream.close()
-                    sshClient.reset()
+        work.result = sshClient.execute<ChannelShell, List<String>>(work.taskNo, SSHEnum.SHELL, work.isLifeCycleFinish()) {
+            val inputStream = inputStream
+            readTerminal(inputStream, sshClient)
+            val commandList = work.parameters.CommandList
+            val outputStream = outputStream
+            if (commandList != null) {
+                for (command in commandList) {
+                    outputStream.write(command.toByteArray(Charsets.UTF_8))
+                    outputStream.flush()
                 }
             }
+            readTerminal(inputStream, sshClient)
+            if (work.isLifeCycleFinish()) {
+                outputStream.close()
+            }
+            listOf(sshClient.concurrentTerminalString ?: "未读取到终端返回消息")
+        }
     }
 
-    private fun startReaderTerminal(inputStream: InputStream, terminalLines: MutableList<String>) {
-        CommonThreadPool.execute {
-            val reader = BufferedReader(inputStream.reader(Charsets.UTF_8))
-            while (true) {
-                val readLine = reader.readLine() ?: break
-                println(readLine)
-                terminalLines.add(readLine)
+    private fun readTerminal(inputStream: InputStream, sshClient: SSHClient) {
+        var tires = 0
+        sshClient.currentTerminalRead = false
+        sshClient.concurrentTerminalString = null
+        while (tires < 3) {
+            val availableBytes = inputStream.available()
+            if (availableBytes < 1) {
+                Thread.sleep(1000)
+                tires ++
+                continue
             }
+            val readBytes = ByteArray(availableBytes)
+            inputStream.read(readBytes)
+            sshClient.concurrentTerminalString = String(readBytes, Charsets.UTF_8)
+            break
         }
+        sshClient.currentTerminalRead = true
     }
 }

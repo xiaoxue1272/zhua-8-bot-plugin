@@ -5,6 +5,7 @@ import io.tiangou.data.Zhua8MessageInfo
 import io.tiangou.data.Zhua8MessageInfoBuilder
 import io.tiangou.enums.ErrorCodeEnum
 import io.tiangou.enums.OperationEnum
+import io.tiangou.enums.SpecialMessageEnum
 import io.tiangou.expection.Zhua8BotException
 import io.tiangou.service.factory.FactoryEnum
 import io.tiangou.service.factory.OperationServiceFactory
@@ -63,14 +64,9 @@ abstract class AbstractEventLogic<E: Event>(
                 errorCode = e.errorCode
                 errorMessage = e.errorMessage
             }
-            if (errorCode == null) {
-                errorCode ?: ErrorCodeEnum.SYSTEM_ERROR.errorCode
-            }
-            if (errorMessage == null) {
-                errorMessage ?: ErrorCodeEnum.SYSTEM_ERROR.errorMessage
-            }
+            logger.error("zhua8机器人,[${event::class.simpleName}]事件逻辑执行系统异常", e)
             replyMessage = MessageChainBuilder()
-                .append("错误:[$errorCode],错误信息:[$errorMessage]")
+                .append("错误:[${errorCode ?: ErrorCodeEnum.SYSTEM_ERROR.errorCode}],错误信息:[${errorMessage ?: ErrorCodeEnum.SYSTEM_ERROR.errorMessage}]")
                 .build()
         }
         // 若回复对象不为空 且 回复消息不为空,则回执消息
@@ -167,9 +163,16 @@ abstract class AbstractEventLogic<E: Event>(
 
     open fun <E : MessageEvent> executeService(event: E) : List<String> =
         convertMessage(event.message.content, event.sender).let {
+            val specialMessageEnum = SpecialMessageEnum.getEnumIfMessageSpecial(it)?.apply {
+                it.body = actualReplacementMessage
+            }
             val operation = judgeMessageOperation(it)
             logger.info("解析当前消息操作类型为:[${operation.desc}],开始执行对应下游服务逻辑")
-            doService(it, operation)
+            var result = doService(it, operation)
+            if (specialMessageEnum != null) {
+                result = listOf(specialMessageEnum.reply)
+            }
+            return result
         }
 
 

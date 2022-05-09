@@ -14,18 +14,21 @@ enum class OperationEnum (
     UPLOAD("文件上传", "/upload"),
 
     DOWNLOAD("文件下载", "/download"),
+
+//    HELP("帮助", "/help"),
     ;
 
     companion object {
         fun getConformTypeEnum(prefix: String?) : OperationEnum  = run{
-            return if (prefix == null || prefix.isBlank()) {
-                TALK
-            } else when (prefix) {
-                TALK.prefix -> TALK
-                COMMAND.prefix -> COMMAND
-                UPLOAD.prefix -> UPLOAD
-                DOWNLOAD.prefix -> DOWNLOAD
-                else -> throw Zhua8BotException(ErrorCodeEnum.UNKNOWN_OPERATION_TYPE)
+            if (prefix == null || prefix.isBlank()) {
+                return@run TALK
+            } else {
+                for (enum in values()) {
+                    if (prefix == enum.prefix) {
+                        return@run enum
+                    }
+                }
+                throw Zhua8BotException(ErrorCodeEnum.UNKNOWN_OPERATION_TYPE)
             }
         }
     }

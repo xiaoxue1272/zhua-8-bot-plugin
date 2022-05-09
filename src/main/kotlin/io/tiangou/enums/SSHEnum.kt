@@ -27,6 +27,7 @@ enum class SSHEnum(val code: String, val initChannel : Channel.() -> Channel, va
 
     SHELL("shell", {
         this.safeCast<ChannelShell>()?.apply {
+            setPty(true)
         } ?: throw Zhua8BotException(ErrorCodeEnum.CREATE_SSH_CLIENT_CHANNEL_FAILED)
         this
     }, ConnectType.FIRST),

@@ -15,13 +15,14 @@ class CommandService(messageInfo: Zhua8MessageInfo): AbstractOperationService(me
 
     private lateinit var commonWork: CommonWork<ShellInfo, List<String>>
 
-    val qqNumber = messageInfo.sender.id;
+    val qqNumber = messageInfo.sender.id
 
     override fun init(): CommandService {
-        var workType: Work.WorkType = Work.WorkType.SYNC
-        var isLifeCycleFinish = true
-        var clientFlag = Constants.DEFAULT_CLIENT_FLAG
-        val commandList = messageInfo.body.takeIf {
+        val lastUserCommandWork = userLastTaskNoMap.get(qqNumber)
+        var workType: Work.WorkType = lastUserCommandWork?.workType() ?: Work.WorkType.SYNC
+        var isLifeCycleFinish = lastUserCommandWork?.isLifeCycleFinish() ?: true
+        var clientFlag = lastUserCommandWork?.parameters?.clientFlag ?: Constants.DEFAULT_CLIENT_FLAG
+        val commandList: List<String>? = messageInfo.body.takeIf {
             messageInfo.body.isNotBlank()
         }?.run {
             var result = this
@@ -47,24 +48,25 @@ class CommandService(messageInfo: Zhua8MessageInfo): AbstractOperationService(me
                 }
             }
             Constants.USE_CLIENT_PREFIX.find(result)?.value?.apply {
-                result = result.replace(this, Constants.EMPTY_STRING)
+                result = result.replace(this, Constants.EMPTY_STRING).trimStart().trimEnd()
                 clientFlag = removeRange(0..1)
             }
             val commandLines = mutableListOf<String>()
-            for (commandLineMather in Constants.COMMAND_CONTEXT_PREFIX.findAll(result).iterator()) {
-                commandLines.add(commandLineMather.value.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING).plus("\n"))
+            for (matchValue in result.replace(Constants.SQUARE_BRACKET_PREFIX, Constants.EMPTY_STRING)
+                .split(Constants.SQUARE_BRACKET_SUFFIX)) {
+                val commandLine = matchValue.trimStart().trimEnd()
+                if (commandLine.contains(Constants.SQUARE_BRACKET_PREFIX) && commandLine.contains(Constants.SQUARE_BRACKET_SUFFIX)) {
+                    throw Zhua8BotException(ErrorCodeEnum.COMMAND_LINES_ERROR)
+                }
+                if (commandLine.isNotBlank()) {
+                    commandLines.add(commandLine + "\n")
+                }
             }
             commandLines
-        }?.takeIf {
-            it.isNotEmpty()
-        } ?: throw Zhua8BotException(ErrorCodeEnum.COMMAND_LINES_IS_EMPTY)
-
-        var taskNo = userLastTaskNoMap.get(qqNumber)
-        if (taskNo == null) {
-            taskNo = "cmd:${Date().time}"
-            userLastTaskNoMap.put(qqNumber, taskNo)
         }
-        commonWork = CommonWork(taskNo, ShellInfo(clientFlag, commandList), workType, isLifeCycleFinish)
+
+        commonWork = CommonWork(lastUserCommandWork?.taskNo ?: "cmd:${Date().time}", ShellInfo(clientFlag, commandList), workType, isLifeCycleFinish)
+        userLastTaskNoMap.put(qqNumber, commonWork)
         return this
     }
 
@@ -73,7 +75,7 @@ class CommandService(messageInfo: Zhua8MessageInfo): AbstractOperationService(me
         if (commonWork.isLifeCycleFinish()) {
             userLastTaskNoMap.remove(qqNumber)
         }
-        return arrayListOf("执行中,目前无法查看执行结果,待后续开发")
+        return commonWork.result ?: arrayListOf("执行中,目前无法查看执行结果,待后续开发")
     }
 
     override fun checkUserPermission(messageInfo: Zhua8MessageInfo): CommandService {
@@ -84,6 +86,6 @@ class CommandService(messageInfo: Zhua8MessageInfo): AbstractOperationService(me
 
     companion object {
         @JvmStatic
-        private val userLastTaskNoMap: ConcurrentHashMap<Long,String> = ConcurrentHashMap()
+        private val userLastTaskNoMap: ConcurrentHashMap<Long, CommonWork<ShellInfo, List<String>>> = ConcurrentHashMap()
     }
 }
