@@ -6,27 +6,26 @@ import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.ChannelShell
 import com.jcraft.jsch.Session
 import io.tiangou.expection.Zhua8BotException
-import net.mamoe.mirai.console.util.safeCast
 
 
 enum class SSHEnum(val code: String, val initChannel : Channel.() -> Channel, val connetcType: ConnectType){
 
     SFTP("sftp", {
-        this.safeCast<ChannelSftp>()?.apply {
+        (this as? ChannelSftp)?.apply {
 
         } ?: throw Zhua8BotException(ErrorCodeEnum.CREATE_SSH_CLIENT_CHANNEL_FAILED)
         this
     }, ConnectType.FIRST),
 
     EXEC("exec", {
-        this.safeCast<ChannelExec>()?.apply {
+        (this as? ChannelExec)?.apply {
             setPty(true)
         } ?: throw Zhua8BotException(ErrorCodeEnum.CREATE_SSH_CLIENT_CHANNEL_FAILED)
         this
     }, ConnectType.LAST),
 
     SHELL("shell", {
-        this.safeCast<ChannelShell>()?.apply {
+        (this as? ChannelShell)?.apply {
             setPty(true)
         } ?: throw Zhua8BotException(ErrorCodeEnum.CREATE_SSH_CLIENT_CHANNEL_FAILED)
         this

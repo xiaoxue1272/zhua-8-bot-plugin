@@ -49,6 +49,16 @@ class Constants {
         const val DEFAULT_CLIENT_FLAG : String = "default"
 
         /**
+         * 换行符
+         */
+        const val NEW_LINE_DELIMITER : String = "\n"
+
+        /**
+         * 回车符
+         */
+        const val ENTER_DELIMITER : String = "\r"
+
+        /**
          * 默认工作目录
          */
         @JvmStatic

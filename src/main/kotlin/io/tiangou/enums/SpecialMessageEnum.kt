@@ -1,40 +1,47 @@
 package io.tiangou.enums
 
 import io.tiangou.data.Zhua8MessageInfo
+import net.mamoe.mirai.contact.User
 
 enum class SpecialMessageEnum(
     val operationEnum : OperationEnum,
     val message : String,
     val actualReplacementMessage : String,
-    val reply : String
+    val replyMessages : List<String>
 ){
     SAVE_ZOMBIE_PROJECT_SERVER(
         OperationEnum.COMMAND,
-        "保存服务器",
+        "保存僵毁服务器",
         "-dtrue -cdefault -easync [screen -d zombie] [screen -r zombie] [save]",
-        "保存中"
+        listOf("保存中")
     ),
 
     STOP_ZOMBIE_PROJECT_SERVER(
         OperationEnum.COMMAND,
-        "停止服务器",
+        "停止僵毁服务器",
         "-dtrue -cdefault -easync [screen -d zombie] [screen -r zombie] [quit]",
-        "开始停止Project Zombiod Server"
+        listOf("开始停止Project Zombiod Server")
     ),
 
     START_ZOMBIE_PROJECT_SERVER(
         OperationEnum.COMMAND,
-        "启动服务器",
-        "-dtrue -cdefault -easync [cd /home/steam/projectZomboidServer] [./start-server.sh]",
-        "开始启动Project Zombiod Server"
+        "启动僵毁服务器",
+        "-dtrue -cdefault -easync [screen -d zombie] [screen -r zombie] [cd /home/steam/projectZomboidServer] [./start-server.sh]",
+        listOf("开始启动Project Zombiod Server")
     ),
     ;
 
    companion object {
-       fun getEnumIfMessageSpecial(message: Zhua8MessageInfo) : SpecialMessageEnum? {
+       fun getMessageInfoIfSpecial(message: String, sender: User) : Zhua8MessageInfo? {
            for (enum in values()) {
-               if (enum.message == message.body && enum.operationEnum.prefix == message.prefix) {
-                   return enum
+               val prefix = enum.operationEnum.prefix
+               if (message.contains(prefix) && message.contains(enum.message)) {
+                   return Zhua8MessageInfo.Builder()
+                       .prefix(prefix)
+                       .body(enum.actualReplacementMessage)
+                       .sender(sender)
+                       .specifyReplyMessages(enum.replyMessages)
+                       .build()
                }
            }
            return null

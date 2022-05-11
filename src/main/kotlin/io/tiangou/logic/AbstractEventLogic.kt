@@ -2,7 +2,6 @@ package io.tiangou.logic
 
 import io.tiangou.constants.Constants
 import io.tiangou.data.Zhua8MessageInfo
-import io.tiangou.data.Zhua8MessageInfoBuilder
 import io.tiangou.enums.ErrorCodeEnum
 import io.tiangou.enums.OperationEnum
 import io.tiangou.enums.SpecialMessageEnum
@@ -17,15 +16,14 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.utils.MiraiLogger
-import net.mamoe.mirai.utils.info
+import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
 abstract class AbstractEventLogic<E: Event>(
     private val onListenActionDescription: String
 ) : EventLogic {
 
-    protected val logger = MiraiLogger.Factory.create(EventLogic::class)
+    protected val log = LoggerFactory.getLogger(this::class.java)
 
     private lateinit var listener: Listener<E>
 
@@ -35,20 +33,20 @@ abstract class AbstractEventLogic<E: Event>(
 
     override fun loadLogic() {
         if (isLogicLoad) {
-            logger.warning("zhua8机器人${onListenActionDescription}监听已配置,不重复设置监听行为,结束")
+            log.warn("zhua8机器人[{}],监听已配置,不重复设置监听行为,结束", onListenActionDescription)
             return
         }
         try {
-            logger.info { "开始配置zhua8机器人${onListenActionDescription}监听行为" }
+            log.info("开始配置zhua8机器人[{}]监听行为", onListenActionDescription)
             listener = GlobalEventChannel
                 // priority = EventPriority.MONITOR 该选项为设置并发优先级
                 .subscribeAlways(eventClass = getEventClass(), priority = EventPriority.MONITOR){
                     doLogic(it)
                 }
             isLogicLoad = true
-            logger.info{"zhua8机器人${onListenActionDescription}监听行为配置完成"}
+            log.info("zhua8机器人[{}]监听行为配置完成", onListenActionDescription)
         } catch (e: Exception) {
-            logger.error("zhua8机器人${onListenActionDescription}监听行为配置异常", e)
+            log.error("zhua8机器人[{}]监听行为配置异常,{}", onListenActionDescription, e.stackTrace)
         }
     }
 
@@ -60,11 +58,12 @@ abstract class AbstractEventLogic<E: Event>(
             var errorCode : String? = null
             var errorMessage : String? = null
             if (e is Zhua8BotException) {
-                logger.warning("zhua8机器人,[${event::class.simpleName}]事件逻辑执行异常,错误码:[${e.errorCode}],错误信息:[${e.errorMessage}]")
+                log.warn("zhua8机器人,[{}]事件逻辑执行异常,错误码:[{}],错误信息:[{}]",
+                    event::class.simpleName, e.errorCode, e.errorMessage)
                 errorCode = e.errorCode
                 errorMessage = e.errorMessage
             }
-            logger.error("zhua8机器人,[${event::class.simpleName}]事件逻辑执行系统异常", e)
+            log.error("zhua8机器人,[{}]事件逻辑执行系统异常\n{}", event::class.simpleName, e.stackTrace)
             replyMessage = MessageChainBuilder()
                 .append("错误:[${errorCode ?: ErrorCodeEnum.SYSTEM_ERROR.errorCode}],错误信息:[${errorMessage ?: ErrorCodeEnum.SYSTEM_ERROR.errorMessage}]")
                 .build()
@@ -73,7 +72,7 @@ abstract class AbstractEventLogic<E: Event>(
         getContact(event)?.apply {
             val contact = this
             replyMessage?.run {
-                logger.info("回复事件类型:[${event::class.simpleName}],回复对象:[${contact.id}],回复信息:[${this.content}]")
+                log.info("回复事件类型:[{}],回复对象:[{}],回复信息:[{}]", event::class.simpleName, contact.id, content)
                 contact.sendMessage(addMessageHeader(this, event))
             }
         }
@@ -81,10 +80,10 @@ abstract class AbstractEventLogic<E: Event>(
 
     override fun destroyLogic() {
         if (isLogicLoad) {
-            logger.warning("开始卸载zhua8机器人${onListenActionDescription}监听配置")
+            log.warn("开始卸载zhua8机器人[{}]监听配置", onListenActionDescription)
             listener.complete()
         }
-        logger.warning("已卸载zhua8机器人${onListenActionDescription}监听配置")
+        log.warn("已卸载zhua8机器人[{}]监听配置", onListenActionDescription)
         isLogicLoad = false
     }
 
@@ -115,7 +114,7 @@ abstract class AbstractEventLogic<E: Event>(
                 if (it == Constants.EMPTY_STRING) {
                     append("?")
                 } else{
-                    append(it)
+                    append(it + "\n")
                 }
             }
             if (stringMessage.isEmpty()) {
@@ -125,25 +124,23 @@ abstract class AbstractEventLogic<E: Event>(
 
     fun stringToMessage(stringMessage: List<String>) : Message =
         MessageChainBuilder().apply {
-            stringMessage.forEach {
-                if (it == Constants.EMPTY_STRING) {
-                    append("?")
-                } else{
-                    append(it)
-                }
-            }
             if (stringMessage.isEmpty()) {
                 append("?")
             }
+            stringMessage.forEach {
+                if (it != Constants.EMPTY_STRING) {
+                    append(it + "\n")
+                }
+            }
         }.build()
 
-    fun judgeMessageOperation(messageInfo: Zhua8MessageInfo): OperationEnum {
-        return OperationEnum.getConformTypeEnum(messageInfo.prefix)
+    fun judgeMessageOperation(prefix: String?): OperationEnum {
+        return OperationEnum.getConformTypeEnum(prefix)
     }
 
     fun convertMessage(message: String, sender: User) : Zhua8MessageInfo {
         var body : String? = message
-        return Zhua8MessageInfoBuilder()
+        return Zhua8MessageInfo.Builder()
             .prefix(
                 Constants.OPERATION_REGEX
                     .find(message)
@@ -161,19 +158,18 @@ abstract class AbstractEventLogic<E: Event>(
             .build()
     }
 
-    open fun <E : MessageEvent> executeService(event: E) : List<String> =
-        convertMessage(event.message.content, event.sender).let {
-            val specialMessageEnum = SpecialMessageEnum.getEnumIfMessageSpecial(it)?.apply {
-                it.body = actualReplacementMessage
-            }
-            val operation = judgeMessageOperation(it)
-            logger.info("解析当前消息操作类型为:[${operation.desc}],开始执行对应下游服务逻辑")
-            var result = doService(it, operation)
-            if (specialMessageEnum != null) {
-                result = listOf(specialMessageEnum.reply)
-            }
-            return result
+    open fun <E : MessageEvent> executeService(event: E) : List<String> {
+        val zhua8MessageInfo =  event.run {
+            SpecialMessageEnum.getMessageInfoIfSpecial(message.content, sender)
+                ?: convertMessage(message.content, sender)
         }
+        val operation = judgeMessageOperation(zhua8MessageInfo.prefix)
+        log.info("解析当前消息操作类型为:[{}],开始执行对应下游服务逻辑", operation.desc)
+        doService(zhua8MessageInfo, operation).let {
+            return zhua8MessageInfo.specifyReplyMessages ?: it
+        }
+    }
+
 
 
     open fun doService(messageInfo: Zhua8MessageInfo, operation: OperationEnum) : List<String> =

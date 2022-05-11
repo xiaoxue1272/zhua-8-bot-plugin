@@ -7,7 +7,6 @@ import com.jcraft.jsch.Session
 import io.tiangou.enums.ErrorCodeEnum
 import io.tiangou.enums.SSHEnum
 import io.tiangou.expection.Zhua8BotException
-import net.mamoe.mirai.console.util.safeCast
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -36,11 +35,15 @@ class SSHClient constructor(
      */
     val currentFlagReference : AtomicReference<String> = AtomicReference(READY)
 
-    @Volatile
-    var currentTerminalRead: Boolean = false
+    /**
+     * 终端返回信息集合
+     */
+    var concurrentTerminalStrings : List<String>? = null
 
-    @Volatile
-    var concurrentTerminalString : String? = null
+    /**
+     * 是否需要初始化(预读shell连接信息,因为该信息并没有什么实质上的作用)
+     */
+    var isNeedInit : Boolean = true
 
     fun connectToSession(): Session {
         try {
@@ -77,15 +80,15 @@ class SSHClient constructor(
                 if (!channel!!.isConnected && SSHEnum.ConnectType.FIRST == sshEnum.connetcType) {
                     channel!!.connect()
                 }
-                channel!!.safeCast<C>()?.let {
+                (channel!! as? C)?.let {
                     result = exec(it)
-                    currentTerminalRead = false
-                    concurrentTerminalString = null
+                    concurrentTerminalStrings = null
                 }
                 if (!channel!!.isConnected && SSHEnum.ConnectType.LAST == sshEnum.connetcType) {
                     channel!!.connect()
                 }
                 if (isDone) {
+                    isNeedInit = true
                     channel!!.disconnect()
                     session!!.disconnect()
                     reset()

@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 object FriendMessageEventLogic : AbstractEventLogic<FriendMessageEvent>("好友消息") {
 
     override suspend fun logic(event: FriendMessageEvent) : Message {
-        logger.info("接收到好友:[${event.friend.nick}]发送的消息:[${event.message.content}]")
+        log.info("接收到好友:[{}]发送的消息:[{}]", event.friend.nick, event.message.content)
         return stringToMessage(GroupTempMessageEventLogic.executeService(event))
     }
 

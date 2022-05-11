@@ -33,40 +33,48 @@ object ShellEngine : AbstractEngine<CommonWork<ShellInfo, List<String>>>() {
         work.changeFlagWorking()
         val sshClient = SSHClient.getSSHClient(work.parameters.clientFlag ?: Constants.DEFAULT_CLIENT_FLAG)
         work.result = sshClient.execute<ChannelShell, List<String>>(work.taskNo, SSHEnum.SHELL, work.isLifeCycleFinish()) {
-            val inputStream = inputStream
-            readTerminal(inputStream, sshClient)
             val commandList = work.parameters.CommandList
             val outputStream = outputStream
+            val inputStream = inputStream
+            if (sshClient.isNeedInit) {
+                loadTerminal(inputStream)
+                sshClient.isNeedInit = false
+            }
             if (commandList != null) {
                 for (command in commandList) {
                     outputStream.write(command.toByteArray(Charsets.UTF_8))
                     outputStream.flush()
                 }
+                readTerminal(inputStream, sshClient)
             }
-            readTerminal(inputStream, sshClient)
             if (work.isLifeCycleFinish()) {
                 outputStream.close()
+                inputStream.close()
             }
-            listOf(sshClient.concurrentTerminalString ?: "未读取到终端返回消息")
+            sshClient.concurrentTerminalStrings?.takeIf { it.isNotEmpty() } ?: listOf( "未读取到终端返回消息")
         }
     }
 
     private fun readTerminal(inputStream: InputStream, sshClient: SSHClient) {
+        loadTerminal(inputStream)?.apply {
+            sshClient.concurrentTerminalStrings = String(this.filter{ it > 0 }.toByteArray(), Charsets.UTF_8)
+                .split(Constants.NEW_LINE_DELIMITER, Constants.ENTER_DELIMITER)
+        }
+    }
+
+    private fun loadTerminal(inputStream: InputStream) : ByteArray? {
         var tires = 0
-        sshClient.currentTerminalRead = false
-        sshClient.concurrentTerminalString = null
-        while (tires < 3) {
+        while (tires < 4) {
             val availableBytes = inputStream.available()
             if (availableBytes < 1) {
-                Thread.sleep(1000)
+                Thread.sleep(500)
                 tires ++
                 continue
             }
-            val readBytes = ByteArray(availableBytes)
-            inputStream.read(readBytes)
-            sshClient.concurrentTerminalString = String(readBytes, Charsets.UTF_8)
-            break
+            return ByteArray(availableBytes).apply {
+                inputStream.read(this)
+            }
         }
-        sshClient.currentTerminalRead = true
+        return null
     }
 }

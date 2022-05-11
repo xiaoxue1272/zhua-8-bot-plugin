@@ -12,8 +12,8 @@ version = "0.0.3-release"
 
 dependencies {
     val hutoolVersion = "5.8.0.M4"
-    implementation("ch.qos.logback:logback-parent:1.2.11")
+    implementation("ch.qos.logback:logback-core:1.2.11")
+    implementation("ch.qos.logback:logback-classic:1.2.11")
     implementation("cn.hutool:hutool-cron:$hutoolVersion")
-    implementation("cn.hutool:hutool-http:$hutoolVersion")
     implementation("com.jcraft:jsch:0.1.54")
 }

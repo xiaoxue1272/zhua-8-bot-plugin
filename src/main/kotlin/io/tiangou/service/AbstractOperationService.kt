@@ -1,7 +1,8 @@
 package io.tiangou.service
 
 import io.tiangou.data.Zhua8MessageInfo
-import net.mamoe.mirai.utils.MiraiLogger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * 操作实现抽象层service
@@ -12,7 +13,7 @@ abstract class AbstractOperationService (
     protected val messageInfo: Zhua8MessageInfo
 ): OperationService {
 
-    protected val logger: MiraiLogger = MiraiLogger.Factory.create(this::class)
+    protected val log: Logger = LoggerFactory.getLogger(this::class.java)
 
 
     override fun doOperator() : List<String> {
@@ -41,7 +42,7 @@ abstract class AbstractOperationService (
      */
     open fun checkUserPermission(messageInfo: Zhua8MessageInfo) : AbstractOperationService =
         apply {
-            logger.info("当前事件不进行权限校验,消息来源用户:[${messageInfo.sender.nick}]")
+            log.info("当前事件不进行权限校验,消息来源用户:[{}]", messageInfo.sender.nick)
         }
 
 }

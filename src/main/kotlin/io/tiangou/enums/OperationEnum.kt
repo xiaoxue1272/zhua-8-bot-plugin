@@ -16,16 +16,18 @@ enum class OperationEnum (
     DOWNLOAD("文件下载", "/download"),
 
 //    HELP("帮助", "/help"),
+
+//    HTTP("http请求", "/http"),
     ;
 
     companion object {
-        fun getConformTypeEnum(prefix: String?) : OperationEnum  = run{
+        fun getConformTypeEnum(prefix: String?) : OperationEnum {
             if (prefix == null || prefix.isBlank()) {
-                return@run TALK
+                return TALK
             } else {
                 for (enum in values()) {
                     if (prefix == enum.prefix) {
-                        return@run enum
+                        return enum
                     }
                 }
                 throw Zhua8BotException(ErrorCodeEnum.UNKNOWN_OPERATION_TYPE)

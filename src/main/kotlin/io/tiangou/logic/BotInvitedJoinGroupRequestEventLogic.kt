@@ -10,10 +10,10 @@ object BotInvitedJoinGroupRequestEventLogic : AbstractEventLogic<BotInvitedJoinG
 
     override suspend fun logic(event: BotInvitedJoinGroupRequestEvent) : Message {
         // 如果消息中能够获取到At对象实例,且At目标为Bot
-        logger.info("监听到入群邀请,邀请人:[${event.invitorNick}],群号:[${event.groupId}], 群名称:[${event.groupName}]")
+        log.info("监听到入群邀请,邀请人:[{}],群号:[{}], 群名称:[{}]", event.invitorNick, event.groupId, event.groupName)
         event.accept()
         return MessageChainBuilder()
-            .append("已接受入群邀请,邀请人:[${event.invitorNick}],群号:[${event.groupId}], 群名称:[${event.groupName}]")
+            .append("已接受入群邀请,邀请人:[{}],群号:[{}], 群名称:[{}]", event.invitorNick, event.groupId.toString(), event.groupName)
             .build()
     }
 
