@@ -4,8 +4,8 @@ import io.tiangou.constants.Constants
 import io.tiangou.data.Zhua8MessageInfo
 import io.tiangou.data.ssh.ShellInfo
 import io.tiangou.engine.CommonWork
+import io.tiangou.engine.ShellEngine
 import io.tiangou.engine.Work
-import io.tiangou.engine.ssh.shell.ShellEngine
 import io.tiangou.enums.ErrorCodeEnum
 import io.tiangou.expection.Zhua8BotException
 import java.util.*

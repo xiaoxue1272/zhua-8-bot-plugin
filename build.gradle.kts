@@ -16,4 +16,5 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.11")
     implementation("cn.hutool:hutool-cron:$hutoolVersion")
     implementation("com.jcraft:jsch:0.1.54")
+    implementation("org.apache.commons:commons-compress:1.9")
 }
