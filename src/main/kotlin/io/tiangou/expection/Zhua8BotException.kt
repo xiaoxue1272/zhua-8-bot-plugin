@@ -2,11 +2,11 @@ package io.tiangou.expection
 
 import io.tiangou.enums.ErrorCodeEnum
 
-open class Zhua8BotException(errorCodeEnum: ErrorCodeEnum, exception: Exception?) : RuntimeException() {
+open class Zhua8BotException(errorCodeEnum: ErrorCodeEnum, errorMessage: String? = null, exception: Exception? = null) : RuntimeException() {
     val errorCode: String = errorCodeEnum.errorCode
-    val errorMessage: String = errorCodeEnum.errorMessage
+    val errorMessage: String = errorMessage?: errorCodeEnum.errorMessage
     val primaryException : Exception? = exception;
 
-    constructor(errorCodeEnum: ErrorCodeEnum): this(errorCodeEnum, null);
+    constructor(errorCodeEnum: ErrorCodeEnum): this(errorCodeEnum, null, null);
 
 }

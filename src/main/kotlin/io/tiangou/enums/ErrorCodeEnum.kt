@@ -16,4 +16,5 @@ enum class ErrorCodeEnum(
     SSH_CLIENT_NOT_EXISTS("SSH_CLIENT_NOT_EXISTS", "当前指定ssh客户端不存在,请先创建"),
     CREATE_SSH_CLIENT_CHANNEL_FAILED("CREATE_SSH_CLIENT_CHANNEL_FAILED", "与服务器开启ssh通讯管道失败,请稍后重试"),
     RUN_COMMAND_PARAMETERS_ERROR("RUN_COMMAND_PARAMETERS_ERROR", "指定的参数不正确,请检查"),
+    STREAM_ERROR("STREAM_ERROR", "操作流异常"),
 }

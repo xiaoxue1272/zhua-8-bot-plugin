@@ -1,10 +1,13 @@
 package io.tiangou
 
+import io.tiangou.enums.ErrorCodeEnum
+import io.tiangou.expection.Zhua8BotException
 import io.tiangou.logic.EventLogic
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 
 const val VERSION = "0.0.3"
+
 
 object Zhua8BotLogic : KotlinPlugin(
     JvmPluginDescription(

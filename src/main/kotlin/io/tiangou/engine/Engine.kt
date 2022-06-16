@@ -47,19 +47,30 @@ sealed class AbstractEngine<T : Work<*>> : Engine<T> {
 sealed class SshEngine<T : SshInfo, R> : AbstractEngine<CommonWork<T, R>>() {
 
     override fun init() {
-        val properties = Zhua8PropertiesUtils.loadProperties("ssh.properties")
-        var clientFlags = properties.getProperty("ssh.clientFlag")
+        val propertyMap = Zhua8PropertiesUtils.loadProperties("ssh.properties")
+        var clientFlags = propertyMap.get("ssh.clientFlag")
         if (clientFlags == null || clientFlags.isBlank()) {
             clientFlags = Constants.DEFAULT_CLIENT_FLAG
         }
         clientFlags.split(Constants.COMMA).forEach {
-            SshClient.Builder()
-                .setHost(properties.getProperty("$it.ssh.host"))
-                .setUser(properties.getProperty("$it.ssh.user"))
-                .setPassword(properties.getProperty("$it.ssh.password"))
-                .setPort(properties.getProperty("$it.ssh.port").takeIf { it.isNotBlank() }?.toInt() ?: "22".toInt())
-                .setClientFlag(it)
-                .build()
+            val sshClientBuilder = SshClient.Builder()
+            sshClientBuilder.setClientFlag(it)
+            propertyMap.get("$it.ssh.host")?.also {
+                sshClientBuilder.setHost(it)
+            }
+            propertyMap.get("$it.ssh.user")?.also {
+                sshClientBuilder.setUser(it)
+            }
+            propertyMap.get("$it.ssh.password")?.also {
+                sshClientBuilder.setPassword(it)
+            }
+            propertyMap.get("$it.ssh.user")?.also {
+                sshClientBuilder.setUser(it)
+            }
+            propertyMap.get("$it.ssh.port")?.also {
+                it.takeIf { it.isNotBlank() }?.toInt() ?: "22".toInt()
+            }
+            sshClientBuilder.build()
         }
     }
 
