@@ -10,7 +10,7 @@ import io.tiangou.enums.SshEnum
 import io.tiangou.expection.Zhua8BotException
 import io.tiangou.utils.Zhua8PropertiesUtils
 import kotlinx.coroutines.launch
-import java.io.InputStream
+import java.io.BufferedReader
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -143,6 +143,7 @@ internal class SshClient constructor(
 
     private fun resetFlag() {
         currentFlagReference.set(READY)
+        isReady = false
     }
 
     fun checkCurrentClientIsUsingAndSetUsedFlag(currentFlag: String,userFlag: String): Boolean =
@@ -239,41 +240,42 @@ object ShellEngine: SshEngine<ShellInfo, List<String>>() {
     override fun operateClient(client: SshClient, work: CommonWork<ShellInfo, List<String>> ) {
         client.execute<ChannelShell, List<String>>(work.taskNo, SshEnum.SHELL, work.isLifeCycleFinish()) {
             val outputStream = outputStream
-            val inputStream = inputStream
-            takeIf { client.isFirstConnect() }?.run { loadTerminal(inputStream) }
+            val reader = BufferedReader(inputStream.reader())
+            takeIf { client.isFirstConnect() }?.run { loadTerminal(reader) }
             val terminalLines = work.parameters.CommandList?.forEach {
                 outputStream.write(it.toByteArray(Charsets.UTF_8))
                 outputStream.flush()
-            }.run { readTerminal(inputStream) }
+            }.run { readTerminal(reader) }
             takeIf { work.isLifeCycleFinish() }.run{
                 outputStream.close()
-                inputStream.close()
+                reader.close()
             }
             terminalLines?.takeIf { it.isNotEmpty() } ?: listOf( "未读取到终端返回消息")
         }
     }
 
 
-    private fun readTerminal(inputStream: InputStream): List<String>? =
-        loadTerminal(inputStream)?.run {
-            String(this.filter{ it > 0 }.toByteArray(), Charsets.UTF_8)
-                .split(Constants.NEW_LINE_DELIMITER, Constants.ENTER_DELIMITER)
+    private fun readTerminal(reader: BufferedReader): List<String>? =
+        loadTerminal(reader).run {
+            takeIf {
+                isNotEmpty()
+            }
         }
 
-    private fun loadTerminal(inputStream: InputStream) : ByteArray? {
+    private fun loadTerminal(reader: BufferedReader) : List<String> {
         var tires = 0
+        val list = mutableListOf<String>()
         while (tires < 4) {
-            val availableBytes = inputStream.available()
-            if (availableBytes < 1) {
+            if (reader.ready()) {
+                val line = reader.readLine() ?: break
+                list.add(line)
+            } else {
                 Thread.sleep(500)
                 tires ++
                 continue
             }
-            return ByteArray(availableBytes).apply {
-                inputStream.read(this)
-            }
         }
-        return null
+        return list
     }
 
 }

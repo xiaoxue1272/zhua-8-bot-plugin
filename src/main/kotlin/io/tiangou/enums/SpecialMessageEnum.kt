@@ -29,6 +29,13 @@ enum class SpecialMessageEnum(
         "-dtrue -cdefault -easync [screen -d zombie] [screen -r zombie] [cd /home/steam/projectZomboidServer] [./start-server.sh]",
         listOf("开始启动Project Zombiod Server")
     ),
+
+    START_LIVEGO_SERVER(
+        OperationEnum.COMMAND,
+        "强制启动直播服务器",
+        "-dtrue -clivego -esync [screen -X -S livego quit] [screen -S livego] [cd /home/livego/livego] [./livego]",
+        listOf("开始启动直播服务器")
+    ),
     ;
 
    companion object {
